@@ -62,6 +62,16 @@ RUN rustup target add riscv64gc-unknown-none-elf && \
 # 2.4. Set GDB
 RUN ln -s /usr/bin/gdb-multiarch /usr/bin/riscv64-unknown-elf-gdb
 
+# 2.5. Launch a ssh server
+RUN apt-get update && apt-get install -y openssh-server
+
+RUN useradd -m -s /bin/bash user
+RUN echo "user:password" | chpasswd
+
+RUN mkdir -p /var/run/sshd
+
+EXPOSE 22
+
 # Stage 3 Sanity checking
 FROM build AS test
 RUN qemu-system-riscv64 --version && \
@@ -70,3 +80,5 @@ RUN qemu-system-riscv64 --version && \
   cargo --version && \
   rustc --version && \
   riscv64-unknown-elf-gdb --version
+
+CMD ["/usr/sbin/sshd", "-D"]
