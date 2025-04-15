@@ -1,21 +1,11 @@
-TARGET = target/riscv64gc-unknown-none-elf/release/os
-BIN = target/riscv64gc-unknown-none-elf/release/os.bin
-QEMU_BIOS = ./rustsbi-qemu.bin
+DOCKER_TAG ?= rcore-tutorial-v3:latest
+.PHONY: docker build_docker
 
-all: run
+docker:
+	docker run --rm -it -v ${PWD}:/mnt -w /mnt --name rcore-tutorial-v3 ${DOCKER_TAG} bash
 
-build:
-	cargo build --release
+build_docker:
+	docker build -t ${DOCKER_TAG} --target build .
 
-strip: build
-	rust-objcopy --strip-all $(TARGET) -O binary $(BIN)
-
-run: strip
-	qemu-system-riscv64 \
-	  -machine virt \
-	  -nographic \
-	  -bios ./rustsbi-qemu.bin \
-	  -device loader,file=$(BIN),addr=0x80200000
-
-clean:
-	cargo clean
+fmt:
+	cd easy-fs; cargo fmt; cd ../easy-fs-fuse cargo fmt; cd ../os ; cargo fmt; cd ../user; cargo fmt; cd ..

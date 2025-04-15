@@ -1,5 +1,5 @@
-/target
+**/target
 **/.DS_Store
 
 /.zed
-/.gdb_history
+**/.gdb_history

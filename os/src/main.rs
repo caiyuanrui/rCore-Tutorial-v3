@@ -32,20 +32,23 @@ pub fn rust_main() {
     clear_bss();
     logging::init().expect("kernel logger init failed");
     info!(
-        "[kernel] .text [{:#x}, {:#x})",
+        "[kernel] .text   [{:#x}, {:#x})",
         stext as usize, etext as usize
     );
     info!(
-        "[kernel] .data [{:#x}, {:#x})",
+        "[kernel] .data   [{:#x}, {:#x})",
         sdata as usize, edata as usize
     );
     info!(
         "[kernel] .rodata [{:#x}, {:#x})",
         srodata as usize, erodata as usize
     );
-    info!("[kernel] .bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
     info!(
-        "[kernel] .stack [{:#x}, {:#x})",
+        "[kernel] .bss    [{:#x}, {:#x})",
+        sbss as usize, ebss as usize
+    );
+    info!(
+        "[kernel] .stack  [{:#x}, {:#x})",
         boot_stack_lower_bound as usize, boot_stack_top as usize
     );
     shutdown(false)
