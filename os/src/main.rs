@@ -8,14 +8,15 @@ mod batch;
 mod lang_items;
 mod logging;
 mod sbi;
+mod sync;
 pub mod syscall;
 pub mod trap;
 
 use core::arch::global_asm;
 
-use log::info;
-use sbi::shutdown;
+use log::{debug, error, info, trace, warn};
 global_asm!(include_str!("entry.asm"));
+global_asm!(include_str!("link_app.S"));
 
 unsafe extern "C" {
     fn sbss();
@@ -34,27 +35,30 @@ unsafe extern "C" {
 pub fn rust_main() {
     clear_bss();
     logging::init().expect("kernel logger init failed");
-    info!(
+    trace!(
         "[kernel] .text   [{:#x}, {:#x})",
         stext as usize, etext as usize
+    );
+    debug!(
+        "[kernel] .rodata [{:#x}, {:#x})",
+        srodata as usize, erodata as usize
     );
     info!(
         "[kernel] .data   [{:#x}, {:#x})",
         sdata as usize, edata as usize
     );
-    info!(
-        "[kernel] .rodata [{:#x}, {:#x})",
-        srodata as usize, erodata as usize
-    );
-    info!(
-        "[kernel] .bss    [{:#x}, {:#x})",
-        sbss as usize, ebss as usize
-    );
-    info!(
+    warn!(
         "[kernel] .stack  [{:#x}, {:#x})",
         boot_stack_lower_bound as usize, boot_stack_top as usize
     );
-    shutdown(false)
+    error!(
+        "[kernel] .bss    [{:#x}, {:#x})",
+        sbss as usize, ebss as usize
+    );
+
+    trap::init();
+    batch::init();
+    batch::run_next_app();
 }
 
 pub fn clear_bss() {

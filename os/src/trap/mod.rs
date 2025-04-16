@@ -10,7 +10,7 @@ use riscv::register::{
     utvec::TrapMode,
 };
 
-use crate::syscall::syscall;
+use crate::{batch::run_next_app, syscall::syscall};
 
 global_asm!(include_str!("trap.S"));
 
@@ -46,8 +46,4 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         }
     }
     cx
-}
-
-fn run_next_app() {
-    unimplemented!()
 }
