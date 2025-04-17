@@ -1,9 +1,9 @@
 use core::arch::asm;
 
 use lazy_static::lazy_static;
-use log::info;
+use log::{debug, info};
 
-use crate::{sync::UpSafeCell, trap::TrapContext};
+use crate::{sbi::shutdown, sync::UpSafeCell, syscall::get_syscall_count, trap::TrapContext};
 
 const USER_STACK_SIZE: usize = 4096 * 2;
 const KERNEL_STACK_SIZE: usize = 4096 * 2;
@@ -70,7 +70,14 @@ impl AppManager {
 
     fn load_app(&self, id: usize) {
         if id > self.num_app {
-            panic!("[kernel] All applications completed!");
+            info!("[kernel] All applications completed!");
+            debug!("SYSCALL_WRITE is called {} times", get_syscall_count(64));
+            debug!("SYSCALL_EXIT is called {} times", get_syscall_count(96));
+            debug!(
+                "SYSCALL_GET_TASKINFO is called {} times",
+                get_syscall_count(1024)
+            );
+            shutdown(false)
         }
         info!("[kernel] Loading app_{}", id);
         unsafe {
