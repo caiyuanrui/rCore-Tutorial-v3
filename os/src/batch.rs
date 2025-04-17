@@ -1,7 +1,7 @@
 use core::arch::asm;
 
 use lazy_static::lazy_static;
-use log::{debug, info};
+use log::{error, info};
 
 use crate::{sbi::shutdown, sync::UpSafeCell, syscall::get_syscall_count, trap::TrapContext};
 
@@ -53,6 +53,8 @@ struct AppManager {
     num_app: usize,
     current_app: usize,
     app_start: [usize; MAX_APP_NUM + 1],
+    start_tick: [usize; MAX_APP_NUM + 1],
+    end_tick: [usize; MAX_APP_NUM + 1],
 }
 
 impl AppManager {
@@ -71,12 +73,7 @@ impl AppManager {
     fn load_app(&self, id: usize) {
         if id > self.num_app {
             info!("[kernel] All applications completed!");
-            debug!("SYSCALL_WRITE is called {} times", get_syscall_count(64));
-            debug!("SYSCALL_EXIT is called {} times", get_syscall_count(96));
-            debug!(
-                "SYSCALL_GET_TASKINFO is called {} times",
-                get_syscall_count(1024)
-            );
+            self.statistic();
             shutdown(false)
         }
         info!("[kernel] Loading app_{}", id);
@@ -103,6 +100,31 @@ impl AppManager {
     pub fn move_to_next_app(&mut self) {
         self.current_app += 1;
     }
+
+    pub fn get_app_tick(&self, id: usize) -> usize {
+        if id > self.num_app {
+            error!("[kernel] app_{id} doesn't exist");
+            return usize::MAX;
+        }
+        self.end_tick[id] - self.start_tick[id]
+    }
+
+    /// Print statistic info.
+    fn statistic(&self) {
+        const QEMU_CLOCK_FREQ: usize = 10_000_000; // 10_000_000 Hz
+        // analyze the number of syscalls
+        info!("SYSCALL_WRITE is called {} times", get_syscall_count(64));
+        info!("SYSCALL_EXIT is called {} times", get_syscall_count(96));
+        info!(
+            "SYSCALL_GET_TASKINFO is called {} times",
+            get_syscall_count(1024)
+        );
+        // analyze the completion ticks of each app
+        for i in 0..self.num_app {
+            let ticks = self.get_app_tick(i);
+            info!("app_{i} costed {}us", ticks / (QEMU_CLOCK_FREQ / 1_000_000));
+        }
+    }
 }
 
 lazy_static! {
@@ -117,10 +139,14 @@ lazy_static! {
             let app_start_raw: &[usize] =
                 core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1);
             app_start[..=num_app].copy_from_slice(app_start_raw);
+            let start_tick = [0; MAX_APP_NUM + 1];
+            let end_tick = [0; MAX_APP_NUM + 1];
             AppManager {
                 num_app,
                 current_app: 0,
                 app_start,
+                start_tick,
+                end_tick,
             }
         })
     };
@@ -142,9 +168,13 @@ pub fn get_current_app() -> usize {
 pub fn run_next_app() -> ! {
     let app_manager = unsafe { APP_MANAGER.exclusive_access() };
     let current_app = app_manager.get_current_app();
+    let current_tick = riscv::register::time::read();
+    if current_app > 0 {
+        app_manager.end_tick[current_app - 1] = current_tick;
+    }
+    app_manager.start_tick[current_app] = current_tick;
     app_manager.load_app(current_app);
     app_manager.move_to_next_app();
-    let _ = app_manager;
     unsafe extern "C" {
         fn __restore(cx_addr: usize);
     }
