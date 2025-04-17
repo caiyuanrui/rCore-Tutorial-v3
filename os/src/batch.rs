@@ -128,6 +128,10 @@ pub fn print_app_info() {
     unsafe { APP_MANAGER.exclusive_access() }.print_app_info();
 }
 
+pub fn get_current_app() -> usize {
+    unsafe { APP_MANAGER.exclusive_access() }.get_current_app()
+}
+
 pub fn run_next_app() -> ! {
     let app_manager = unsafe { APP_MANAGER.exclusive_access() };
     let current_app = app_manager.get_current_app();
