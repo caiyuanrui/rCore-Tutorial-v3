@@ -2,6 +2,7 @@
 
 use core::cell::UnsafeCell;
 
+/// `UpSafeCell` is safe to be shared in uniprocessor.
 pub struct UpSafeCell<T> {
     inner: UnsafeCell<T>,
 }
@@ -17,6 +18,9 @@ impl<T> UpSafeCell<T> {
         }
     }
 
+    /// # Safety
+    /// User is responsible for the exclusive ownership of `self`.
+    /// It is an *undefined behavior* if the object is borrowed multiple times.
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn exclusive_access(&self) -> &mut T {
         unsafe { &mut *self.inner.get() }

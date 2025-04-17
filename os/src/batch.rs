@@ -3,7 +3,7 @@ use core::arch::asm;
 use lazy_static::lazy_static;
 use log::info;
 
-use crate::{sbi::shutdown, sync::UpSafeCell, trap::TrapContext};
+use crate::{sync::UpSafeCell, trap::TrapContext};
 
 const USER_STACK_SIZE: usize = 4096 * 2;
 const KERNEL_STACK_SIZE: usize = 4096 * 2;
@@ -70,8 +70,7 @@ impl AppManager {
 
     fn load_app(&self, id: usize) {
         if id > self.num_app {
-            info!("[kernel] All applications completed!");
-            shutdown(false)
+            panic!("[kernel] All applications completed!");
         }
         info!("[kernel] Loading app_{}", id);
         unsafe {
@@ -107,7 +106,7 @@ lazy_static! {
             }
             let num_app_ptr = _num_app as usize as *const usize;
             let num_app = num_app_ptr.read_volatile();
-            let mut app_start: [usize; MAX_APP_NUM + 1] = [0; MAX_APP_NUM + 1];
+            let mut app_start = [0; MAX_APP_NUM + 1];
             let app_start_raw: &[usize] =
                 core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1);
             app_start[..=num_app].copy_from_slice(app_start_raw);

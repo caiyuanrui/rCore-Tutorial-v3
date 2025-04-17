@@ -6,8 +6,8 @@
     ld x\n, \n*8(sp)
 .endm
     .section .text
-    .global __alltraps
-    .global __restore
+    .globl __alltraps
+    .globl __restore
     .align 2
 __alltraps:
     csrrw sp, sscratch, sp
@@ -36,10 +36,11 @@ __alltraps:
     # set input argument of trap_handler(cx: &mut TrapContext)
     mv a0, sp
     call trap_handler
+
 __restore:
     # case1: start running app by __restore
     # case2: back to U after handling trap
-    mv sp, a0
+    mv sp, a0 # in trap_handler, which takes &mut cx and returns it, the a0 doesn't change at all
     # now sp->kernel stack(after allocated), sscratch->user stack
     # restore sstatus/sepc
     ld t0, 32*8(sp)
