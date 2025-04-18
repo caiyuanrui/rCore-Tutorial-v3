@@ -109,6 +109,14 @@ impl AppManager {
         self.end_tick[id] - self.start_tick[id]
     }
 
+    pub fn get_current_app_range(&self) -> (usize, usize) {
+        (
+            APP_BASE_ADDRESS,
+            APP_BASE_ADDRESS + self.app_start[self.current_app]
+                - self.app_start[self.current_app - 1],
+        )
+    }
+
     /// Print statistic info.
     fn statistic(&self) {
         const QEMU_CLOCK_FREQ: usize = 10_000_000; // 10_000_000 Hz
@@ -163,6 +171,15 @@ pub fn print_app_info() {
 
 pub fn get_current_app() -> usize {
     unsafe { APP_MANAGER.exclusive_access() }.get_current_app()
+}
+
+pub fn get_current_app_range() -> (usize, usize) {
+    unsafe { APP_MANAGER.exclusive_access() }.get_current_app_range()
+}
+
+pub fn get_user_stack_range() -> (usize, usize) {
+    let sp = USER_STACK.get_sp();
+    (sp - USER_STACK_SIZE, sp)
 }
 
 pub fn run_next_app() -> ! {

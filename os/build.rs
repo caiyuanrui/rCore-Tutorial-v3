@@ -4,16 +4,16 @@ use std::{
 };
 
 fn main() {
-    println!("carogo:rerun-if-changed=../user/src");
+    println!("carogo:rerun-if-changed=../user/src/");
     println!("carogo:rerun-if-changed={TARGET_PATH}");
     insert_app_data().unwrap();
 }
 
-static TARGET_PATH: &str = "../user/target/riscv64gc-unknown-none-elf/release/";
+static TARGET_PATH: &str = "../user/build/bin/";
 
 fn insert_app_data() -> Result<()> {
     let mut f = File::create("src/link_app.S")?;
-    let mut apps: Vec<_> = read_dir("../user/src/bin")?
+    let mut apps: Vec<_> = read_dir(TARGET_PATH)?
         .map(|entry| {
             let mut name_with_ext = entry.unwrap().file_name().into_string().unwrap();
             name_with_ext.truncate(name_with_ext.find(".").unwrap());
