@@ -3,13 +3,9 @@ use core::arch::asm;
 use lazy_static::lazy_static;
 use log::{error, info};
 
-use crate::{sbi::shutdown, sync::UpSafeCell, syscall::get_syscall_count, trap::TrapContext};
-
-const USER_STACK_SIZE: usize = 4096 * 2;
-const KERNEL_STACK_SIZE: usize = 4096 * 2;
-const MAX_APP_NUM: usize = 16;
-const APP_BASE_ADDRESS: usize = 0x80400000;
-const APP_SIZE_LIMIT: usize = 0x20000;
+use crate::{
+    config::*, sbi::shutdown, sync::UpSafeCell, syscall::get_syscall_count, trap::TrapContext,
+};
 
 #[repr(align(4096))]
 struct KernelStack {

@@ -5,12 +5,15 @@
 mod console;
 
 mod batch;
+mod config;
 mod lang_items;
+mod loader;
 mod logging;
 mod sbi;
 mod stack_trace;
 mod sync;
 pub mod syscall;
+mod task;
 pub mod trap;
 
 use core::arch::global_asm;
